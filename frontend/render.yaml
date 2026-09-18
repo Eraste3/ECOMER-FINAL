@@ -1,0 +1,14 @@
+# Blueprint Render pour ECOMER - Frontend (React + Vite)
+# Dans Render : New > Blueprint > ce repo. Puis renseigne les valeurs `sync: false`.
+
+services:
+  - type: web
+    name: ecomer-frontend
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm run preview
+    envVars:
+      - key: VITE_API_BASE_URL
+        value: https://ecomer-api.onrender.com
+        sync: false

@@ -1,0 +1,93 @@
+/* @import url() FONT IMPORTS MUST ALWAYS BE AT THE VERY TOP OF THIS FILE, ABOVE THE TAILWIND IMPORTS — DO NOT DELETE THIS COMMENT */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap');
+
+/* CRITICAL: THE FOLLOWING TAILWIND IMPORTS MUST NEVER BE DELETED OR REORDERED — DO NOT DELETE THIS COMMENT */
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+/* END TAILWIND IMPORTS — ALL OTHER CSS MUST GO BELOW THIS LINE */
+:root {
+  /* ECOMER — identité visuelle */
+  --ecomer-abyss: #04101c;
+  --ecomer-navy: #071b2e;
+  --ecomer-navy-soft: #0d2a45;
+  --ecomer-ocean: #0e4f7d;
+  --ecomer-ocean-bright: #1273b8;
+  --ecomer-cyan: #22d3ee;
+  --ecomer-teal: #14b8a6;
+  --ecomer-green: #10b981;
+  --ecomer-amber: #f59e0b;
+  --ecomer-orange: #f97316;
+  --ecomer-red: #ef4444;
+  --ecomer-surface: #f4f7fa;
+  --ecomer-border: #e2e8f0;
+}
+html,
+body,
+#root {
+  width: 100%;
+  min-height: 100%;
+}
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background-color: var(--ecomer-surface);
+  color: #0f172a;
+  -webkit-font-smoothing: antialiased;
+}
+.font-display {
+  font-family: 'Space Grotesk', 'Inter', sans-serif;
+}
+/* Scrollbars discrètes */
+.ecomer-scroll::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.ecomer-scroll::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.35);
+  border-radius: 999px;
+}
+.ecomer-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+/* Glassmorphism léger pour les interfaces institutionnelles */
+.glass-dark {
+  background: rgba(13, 42, 69, 0.55);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(148, 197, 234, 0.12);
+}
+@keyframes ecomer-ping-slow {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.75;
+  }
+  70% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+.animate-ping-slow {
+  animation: ecomer-ping-slow 2.8s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+@keyframes ecomer-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: #e6ecf3;
+}
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+  animation: ecomer-shimmer 1.6s infinite;
+}

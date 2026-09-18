@@ -1,0 +1,75 @@
+# Blueprint Render pour ECOMER - Projet complet
+# Dans Render : New > Blueprint > ce repo
+# Ce fichier orchestre le déploiement de tous les services ECOMER
+
+services:
+  # ---------------------------------------------------------------------------
+  # API Express + Prisma + Service IA
+  # ---------------------------------------------------------------------------
+  - type: web
+    name: ecomer-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: CORS_ORIGIN
+        sync: false
+      - key: CLUSTERING_RADIUS_METERS
+        value: "500"
+      - key: CLUSTERING_MIN_SAMPLES
+        value: "3"
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: CLOUDINARY_FOLDER
+        value: ecomer/signalements
+      - key: IA_SERVICE_URL
+        sync: false
+      - key: IA_API_KEY
+        sync: false
+      - key: IA_TIMEOUT_MS
+        value: "90000"
+
+  # ---------------------------------------------------------------------------
+  # Service IA (FastAPI + YOLOv8)
+  # ---------------------------------------------------------------------------
+  - type: web
+    name: ecomer-ia
+    runtime: docker
+    plan: free
+    dockerfilePath: ./backend/ia-service/Dockerfile
+    dockerContext: ./backend/ia-service
+    healthCheckPath: /health
+    envVars:
+      - key: YOLO_MODEL
+        value: yolov8n.onnx
+      - key: YOLO_CONF_THRESHOLD
+        value: "0.35"
+      - key: IA_API_KEY
+        sync: false
+
+  # ---------------------------------------------------------------------------
+  # Frontend React + Vite
+  # ---------------------------------------------------------------------------
+  - type: web
+    name: ecomer-frontend
+    runtime: node
+    plan: free
+    buildCommand: cd frontend && npm install && npm run build
+    startCommand: cd frontend && npm run preview
+    envVars:
+      - key: VITE_API_BASE_URL
+        sync: false
