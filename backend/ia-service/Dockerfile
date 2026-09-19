@@ -5,11 +5,11 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-COPY requirements.txt .
+COPY backend/ia-service/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY app.py .
-COPY yolov8n.onnx .
+COPY backend/ia-service/app.py .
+COPY backend/ia-service/yolov8n.onnx .
 
 ARG YOLO_MODEL=yolov8n.onnx
 ENV YOLO_MODEL=$YOLO_MODEL

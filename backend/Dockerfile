@@ -2,14 +2,14 @@ FROM node:22-bookworm-slim
 
 WORKDIR /app
 
-COPY package*.json ./
+COPY backend/package*.json ./
 RUN npm install --omit=dev
 
-COPY prisma ./prisma
+COPY backend/prisma ./prisma
 ENV DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder"
 RUN npx prisma generate
 
-COPY src ./src
+COPY backend/src ./src
 
 EXPOSE 8000
 
