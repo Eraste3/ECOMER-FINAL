@@ -1,0 +1,373 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  citoyen
+  agent
+  admin
+  recycleur
+}
+
+enum StatutSignalement {
+  en_attente
+  valide
+  rejete
+}
+
+enum Gravite {
+  faible
+  moyenne
+  elevee
+}
+
+enum StatutZone {
+  en_attente
+  validee
+  rejetee
+  resolue
+}
+
+enum Criticite {
+  faible
+  moyenne
+  elevee
+  critique
+}
+
+enum TypeAppel {
+  collecte
+  detection
+}
+
+enum StatutAppel {
+  ouvert
+  complet
+  termine
+  annule
+}
+
+enum StatutOperation {
+  planifiee
+  en_cours
+  terminee
+  annulee
+}
+
+enum QualiteDechet {
+  trie
+  prepare
+  rejete
+}
+
+enum StatutLot {
+  disponible
+  reserve
+  vendu
+  annule
+}
+
+enum TypeTransaction {
+  achat
+  offre
+}
+
+enum StatutCommande {
+  en_attente
+  confirmee
+  livree
+  payee
+  annulee
+}
+
+enum MouvementType {
+  entree
+  sortie
+}
+
+enum Niveau {
+  bronze
+  argent
+  or
+}
+
+enum TypeOperation {
+  ecomer
+  citoyenne
+}
+
+model Utilisateur {
+  id                Int       @id @default(autoincrement())
+  nom               String
+  email             String    @unique
+  telephone         String?
+  password          String
+  role              Role      @default(citoyen)
+  actif             Boolean   @default(true)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  citoyen           Citoyen?
+  agent             AgentEcomer?
+  administrateur    Administrateur?
+  recycleur         Recycleur?
+  signalements      Signalement[]
+  participations    Participation[]
+  notifications     Notification[]
+  operationsCreees Operation[] @relation("OperationCreateur")
+  commandes        Commande[]
+
+  @@index([role])
+}
+
+model Citoyen {
+  id              Int          @id @default(autoincrement())
+  utilisateurId   Int          @unique
+  operateurMobile String?
+  ecoPoints       Int          @default(0)
+  niveau          Niveau       @default(bronze)
+  utilisateur     Utilisateur  @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+  badgesAcquis    BadgeAcquis[]
+}
+
+model AgentEcomer {
+  id            Int         @id @default(autoincrement())
+  utilisateurId Int         @unique
+  utilisateur   Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+  equipes       Equipe[]
+  operations    Operation[]
+}
+
+model Administrateur {
+  id            Int         @id @default(autoincrement())
+  utilisateurId Int         @unique
+  utilisateur   Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+}
+
+model Recycleur {
+  id              Int         @id @default(autoincrement())
+  utilisateurId   Int         @unique
+  entreprise      String
+  typesMateriaux  String[]
+  utilisateur     Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+}
+
+model Equipe {
+  id        Int         @id @default(autoincrement())
+  nom       String
+  agentId   Int?
+  agent     AgentEcomer? @relation(fields: [agentId], references: [id], onDelete: SetNull)
+  membres   Participation[]
+  operations Operation[]
+}
+
+model Signalement {
+  id             Int               @id @default(autoincrement())
+  photoUrl       String
+  latitude       Float
+  longitude      Float
+  typeDechet     String?
+  description    String?
+  suggestionIa  String?
+  gravite        Gravite?
+  statut         StatutSignalement @default(en_attente)
+  utilisateurId  Int
+  zoneId         Int?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  utilisateur    Utilisateur       @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+  zone           ZonePollution?    @relation(fields: [zoneId], references: [id], onDelete: SetNull)
+
+  @@index([latitude, longitude])
+  @@index([zoneId])
+  @@index([statut])
+}
+
+model ZonePollution {
+  id                Int          @id @default(autoincrement())
+  nom               String?
+  latitude          Float
+  longitude         Float
+  rayonMetres       Float
+  criticite         Criticite    @default(faible)
+  tonnageEstimeKg   Float        @default(0)
+  typeDechetDominant String?
+  statut            StatutZone   @default(en_attente)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  signalements      Signalement[]
+  appelsOffres      AppelOffres[]
+  operations        Operation[]
+}
+
+model AppelOffres {
+  id              Int          @id @default(autoincrement())
+  zoneId          Int
+  type            TypeAppel
+  dateIntervention DateTime
+  placesRequises  Int          @default(1)
+  remuneration    Float        @default(0)
+  equipement      String?
+  description     String?
+  statut          StatutAppel  @default(ouvert)
+  createdAt       DateTime     @default(now())
+  zone            ZonePollution @relation(fields: [zoneId], references: [id], onDelete: Cascade)
+  participations  Participation[]
+
+  @@index([zoneId])
+}
+
+model Participation {
+  id             Int          @id @default(autoincrement())
+  appelOffresId  Int
+  utilisateurId  Int
+  equipeId       Int?
+  statut         String       @default("inscrit")
+  createdAt      DateTime     @default(now())
+  appelOffres    AppelOffres  @relation(fields: [appelOffresId], references: [id], onDelete: Cascade)
+  utilisateur    Utilisateur  @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+  equipe         Equipe?      @relation(fields: [equipeId], references: [id], onDelete: SetNull)
+
+  @@unique([appelOffresId, utilisateurId])
+}
+
+model Operation {
+  id               Int             @id @default(autoincrement())
+  zoneId           Int
+  equipeId         Int?
+  createurId       Int
+  titre            String?
+  description      String?
+  statut            StatutOperation @default(planifiee)
+  photoAvantUrl    String?
+  photoApresUrl    String?
+  dateDebut        DateTime?
+  dateFin          DateTime?
+  teamName         String?
+  lead             String?
+  agents           Int?
+  materials        String[]
+  interventionType String?
+  severity         Gravite?
+  priority         Gravite?
+  areaM2           Float?
+  deadline         DateTime?
+  collectedTons    Float?
+  createdAt        DateTime        @default(now())
+  zone             ZonePollution   @relation(fields: [zoneId], references: [id], onDelete: Cascade)
+  equipe           Equipe?         @relation(fields: [equipeId], references: [id], onDelete: SetNull)
+  createur         Utilisateur     @relation("OperationCreateur", fields: [createurId], references: [id])
+  agentEcomer      AgentEcomer?    @relation(fields: [agentEcomerId], references: [id])
+  agentEcomerId    Int?
+  dechets          Dechet[]
+
+  @@index([zoneId])
+  @@index([statut])
+}
+
+model Dechet {
+  id            Int           @id @default(autoincrement())
+  operationId   Int
+  categorie     String
+  poidsKg       Float
+  qualite       QualiteDechet
+  createdAt     DateTime      @default(now())
+  operation     Operation     @relation(fields: [operationId], references: [id], onDelete: Cascade)
+}
+
+model StockEcomer {
+  id            Int        @id @default(autoincrement())
+  categorie     String     @unique
+  quantiteKg    Float      @default(0)
+  updatedAt     DateTime   @updatedAt
+  mouvements    MouvementStock[]
+}
+
+model MouvementStock {
+  id            Int           @id @default(autoincrement())
+  stockId       Int
+  type          MouvementType
+  quantiteKg    Float
+  motif         String
+  referenceId   Int?
+  createdAt     DateTime      @default(now())
+  stock         StockEcomer   @relation(fields: [stockId], references: [id], onDelete: Cascade)
+
+  @@index([stockId])
+}
+
+model LotEcoshop {
+  id            Int         @id @default(autoincrement())
+  categorie     String
+  quantiteKg    Float
+  qualite       QualiteDechet
+  prixUnitaire  Float
+  statut        StatutLot   @default(disponible)
+  createdAt     DateTime    @default(now())
+  commandes     Commande[]
+}
+
+model Commande {
+  id             Int             @id @default(autoincrement())
+  lotId          Int
+  utilisateurId  Int
+  quantiteKg     Float
+  typeTransaction TypeTransaction
+  montantOffre   Float?
+  statut         StatutCommande  @default(en_attente)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  lot            LotEcoshop      @relation(fields: [lotId], references: [id], onDelete: Cascade)
+  utilisateur    Utilisateur     @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+
+  @@index([lotId])
+  @@index([utilisateurId])
+}
+
+model Badge {
+  id          Int         @id @default(autoincrement())
+  nom         String      @unique
+  description String?
+  iconeUrl    String?
+  seuilEcoPoints Int     @default(0)
+  createdAt   DateTime    @default(now())
+  acquisitions BadgeAcquis[]
+
+  @@index([seuilEcoPoints])
+}
+
+model BadgeAcquis {
+  id            Int       @id @default(autoincrement())
+  badgeId       Int
+  citoyenId     Int
+  createdAt     DateTime  @default(now())
+  badge         Badge     @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+  citoyen       Citoyen   @relation(fields: [citoyenId], references: [id], onDelete: Cascade)
+
+  @@unique([badgeId, citoyenId])
+}
+
+model Notification {
+  id            Int         @id @default(autoincrement())
+  utilisateurId Int
+  titre         String
+  message       String
+  lue           Boolean     @default(false)
+  createdAt     DateTime    @default(now())
+  utilisateur   Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+
+  @@index([utilisateurId, lue])
+}
+
+model TokenInvalide {
+  id        Int      @id @default(autoincrement())
+  jti       String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([expiresAt])
+}

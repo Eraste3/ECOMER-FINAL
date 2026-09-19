@@ -1,0 +1,67 @@
+# Blueprint Render pour ECOMER - Backend (API + service IA).
+# Dans Render : New > Blueprint > ce repo. Puis renseigne les valeurs `sync: false`.
+#
+# Les photos partent sur Cloudinary en production (disque conteneur ephemere).
+
+services:
+  # ---------------------------------------------------------------------------
+  # API Express + Prisma. Les migrations s'appliquent automatiquement au demarrage.
+  # ---------------------------------------------------------------------------
+  - type: web
+    name: ecomer-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL            # Neon, avec ?sslmode=require
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: CORS_ORIGIN             # URL exacte du front, ex: https://ecomer-front.onrender.com
+        sync: false
+      - key: CLUSTERING_RADIUS_METERS
+        value: "500"
+      - key: CLUSTERING_MIN_SAMPLES
+        value: "3"
+      # --- Stockage des photos (OBLIGATOIRE : Cloudinary) ---
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: CLOUDINARY_FOLDER
+        value: ecomer/signalements
+      # --- Service IA (URL publique, ex: https://ecomer-ia.onrender.com) ---
+      - key: IA_SERVICE_URL
+        sync: false
+      - key: IA_API_KEY              # IDENTIQUE cote ecomer-ia
+        sync: false
+      - key: IA_TIMEOUT_MS          # Onerfree, laisse le temps au service IA de se reveiller (spin-down)
+        value: "90000"
+
+  # ---------------------------------------------------------------------------
+  # Service IA (FastAPI + ONNX Runtime en lieu et place de PyTorch).
+  # Mesure : ~140 Mo de RAM en inference -> compatible avec le plan `free`.
+  # Le modele yolov8n.onnx (12 Mo) est commite dans le repo.
+  # ---------------------------------------------------------------------------
+  - type: web
+    name: ecomer-ia
+    runtime: docker
+    plan: free
+    dockerfilePath: ./ia-service/Dockerfile
+    dockerContext: ./ia-service
+    healthCheckPath: /health
+    envVars:
+      - key: YOLO_MODEL
+        value: yolov8n.onnx
+      - key: YOLO_CONF_THRESHOLD
+        value: "0.35"
+      - key: IA_API_KEY              # IDENTIQUE cote ecomer-api
+        sync: false

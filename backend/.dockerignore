@@ -1,0 +1,11 @@
+node_modules
+.env
+.env.*
+!.env.example
+npm-debug.log*
+ia-service/.venv
+ia-service/__pycache__
+ia-service/*.pyc
+ia-service/yolov8n.pt
+.git
+coverage

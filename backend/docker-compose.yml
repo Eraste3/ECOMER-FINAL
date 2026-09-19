@@ -1,0 +1,41 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ecomer_api
+    ports:
+      - "${PORT:-8000}:8000"
+    environment:
+      PORT: 8000
+      NODE_ENV: production
+      DATABASE_URL: ${DATABASE_URL}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}
+      CLUSTERING_RADIUS_METERS: ${CLUSTERING_RADIUS_METERS:-500}
+      CLUSTERING_MIN_SAMPLES: ${CLUSTERING_MIN_SAMPLES:-3}
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME:-}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY:-}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET:-}
+      CLOUDINARY_FOLDER: ${CLOUDINARY_FOLDER:-ecomer/signalements}
+      IA_SERVICE_URL: http://ia:8501
+      IA_TIMEOUT_MS: ${IA_TIMEOUT_MS:-20000}
+      IA_API_KEY: ${IA_API_KEY:-}
+    depends_on:
+      - ia
+    restart: unless-stopped
+
+  ia:
+    build:
+      context: ./ia-service
+      dockerfile: Dockerfile
+    container_name: ecomer_ia
+    ports:
+      - "${IA_SERVICE_PORT:-8501}:8501"
+    environment:
+      YOLO_MODEL: ${YOLO_MODEL:-yolov8n.onnx}
+      YOLO_CONF_THRESHOLD: ${YOLO_CONF_THRESHOLD:-0.35}
+      IA_API_KEY: ${IA_API_KEY:-}
+      IA_ALLOW_PRIVATE: ${IA_ALLOW_PRIVATE:-0}
+    restart: unless-stopped

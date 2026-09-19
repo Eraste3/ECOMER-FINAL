@@ -1,0 +1,24 @@
+node_modules/
+.env
+.env.*
+!.env.example
+npm-debug.log*
+*.log
+.DS_Store
+coverage/
+
+# Python / IA service
+ia-service/.venv/
+ia-service/__pycache__/
+ia-service/*.pyc
+ia-service/yolov8n.pt
+
+# Model IA (garder yolov8n.onnx dans ia-service)
+yolov8n.pt
+
+# Upload local (fallback lorsque Cloudinary n'est pas configuré)
+uploads/
+_srv*.log
+_*.js
+dbcheck.js
+bus-test.jpg
