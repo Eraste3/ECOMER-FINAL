@@ -1,0 +1,102 @@
+import type { Ong } from '../types';
+
+export const mockOngs: Ong[] = [
+  {
+    id: 'ONG-ACE',
+    name: 'Aide Congo Environnement',
+    manager: 'Pascaline Mavoungou',
+    email: 'contact@aidecongoenvironnement.org',
+    phone: '+242 06 601 23 45',
+    zone: 'Ngambio',
+    status: 'actif',
+    createdAt: '2023-03-12',
+    agents: 18,
+    interventionsDone: 46,
+    accredited: true,
+    logoColor: '#1273b8'
+  },
+  {
+    id: 'ONG-BRA',
+    name: 'Brala Recyclage',
+    manager: 'Serge Loubaki',
+    email: 'ong@bralarecyclage.org',
+    phone: '+242 05 554 78 90',
+    zone: 'Mvou-Mvou',
+    status: 'actif',
+    createdAt: '2022-11-02',
+    agents: 24,
+    interventionsDone: 61,
+    accredited: true,
+    logoColor: '#10b981'
+  },
+  {
+    id: 'ONG-EMC',
+    name: 'Eco-Mer Congo',
+    manager: 'Ghislaine Nkouka',
+    email: 'info@ecomercongo.org',
+    phone: '+242 06 942 15 63',
+    zone: 'Côte Sauvage',
+    status: 'actif',
+    createdAt: '2021-06-25',
+    agents: 15,
+    interventionsDone: 38,
+    accredited: true,
+    logoColor: '#0ea5e9'
+  },
+  {
+    id: 'ONG-VER',
+    name: 'Vertes Rives de Pointe-Noire',
+    manager: 'Aristide Bemba',
+    email: 'contact@verterives.org',
+    phone: '+242 05 337 61 02',
+    zone: 'Loandjili',
+    status: 'actif',
+    createdAt: '2023-01-19',
+    agents: 12,
+    interventionsDone: 27,
+    accredited: true,
+    logoColor: '#22c55e'
+  },
+  {
+    id: 'ONG-TIP',
+    name: 'Tière Intégration Propre',
+    manager: 'Odette Samba',
+    email: 'ong@tierepropre.org',
+    phone: '+242 06 815 44 79',
+    zone: 'Tié-Tié',
+    status: 'en_attente',
+    createdAt: '2024-04-08',
+    agents: 9,
+    interventionsDone: 0,
+    accredited: false,
+    logoColor: '#f59e0b'
+  },
+  {
+    id: 'ONG-LUM',
+    name: 'Lumumba Action Verte',
+    manager: 'Fernand Otsana',
+    email: 'action@lumumbaverte.org',
+    phone: '+242 05 728 90 34',
+    zone: 'Lumumba',
+    status: 'actif',
+    createdAt: '2022-08-30',
+    agents: 14,
+    interventionsDone: 33,
+    accredited: true,
+    logoColor: '#14b8a6'
+  },
+  {
+    id: 'ONG-BAL',
+    name: 'Baie de Loango Association',
+    manager: 'Mireille Moukala',
+    email: 'contact@baiedeloango.org',
+    phone: '+242 06 244 87 16',
+    zone: 'Baie de Loango',
+    status: 'suspendu',
+    createdAt: '2020-12-05',
+    agents: 11,
+    interventionsDone: 19,
+    accredited: false,
+    logoColor: '#8b5cf6'
+  }
+];
