@@ -66,10 +66,10 @@ services:
   # ---------------------------------------------------------------------------
   - type: web
     name: ecomer-frontend
-    runtime: node
+    runtime: docker
     plan: free
-    buildCommand: cd frontend && npm install && npm run build
-    startCommand: cd frontend && npm run preview
+    dockerfilePath: ./frontend/Dockerfile
+    dockerContext: .
     envVars:
       - key: VITE_API_BASE_URL
         sync: false
