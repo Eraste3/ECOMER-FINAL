@@ -10,8 +10,8 @@ services:
     name: ecomer-api
     runtime: docker
     plan: free
-    dockerfilePath: Dockerfile
-    dockerContext: ./backend
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: .
     healthCheckPath: /health
     envVars:
       - key: NODE_ENV
@@ -50,8 +50,8 @@ services:
     name: ecomer-ia
     runtime: docker
     plan: free
-    dockerfilePath: Dockerfile
-    dockerContext: ./backend/ia-service
+    dockerfilePath: ./backend/ia-service/Dockerfile
+    dockerContext: .
     healthCheckPath: /health
     envVars:
       - key: YOLO_MODEL
