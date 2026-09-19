@@ -9,15 +9,33 @@ import { SeverityChart } from '../../components/charts/SeverityChart';
 import { ImpactChart } from '../../components/charts/ImpactChart';
 import { Button } from '../../components/ui/Button';
 import { Card, CardHeader } from '../../components/ui/Card';
-import {
-  platformStats,
-  processingDelay,
-  reportsTrend30d,
-  reportsTrend3m,
-  reportsTrend7d,
-  reportsTrendAll,
-  wasteDistribution } from
-'../../data/mock-statistics';
+
+// Mock data (replaces deleted mock-statistics)
+const platformStats = {
+  totalReports: 1247,
+  avgProcessingDays: 3.2,
+  cleanedAreaHa: 18.4,
+  activeCitizens: 892
+};
+
+const processingDelay = [
+  { label: 'Validation signalement', jours: 0.5 },
+  { label: 'Clustering', jours: 0.8 },
+  { label: 'Planification mission', jours: 1.2 },
+  { label: 'Exécution', jours: 2.5 }
+];
+
+const reportsTrend7d: any[] = [];
+const reportsTrend30d: any[] = [];
+const reportsTrend3m: any[] = [];
+const reportsTrendAll: any[] = [];
+
+const wasteDistribution = [
+  { label: 'Plastiques', value: 45, color: '#3b82f6' },
+  { label: 'Ménagers', value: 28, color: '#f59e0b' },
+  { label: 'Filets', value: 15, color: '#10b981' },
+  { label: 'Divers', value: 12, color: '#8b5cf6' }
+];
 
 const ranges = ['7J', '30J', '3M', 'Tout'];
 
