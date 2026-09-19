@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ArrowLeftIcon, CheckCircle2Icon, ClockIcon, UsersIcon } from 'lucide-react';
 import { Card, CardHeader } from '../../components/ui/Card';
@@ -8,27 +8,37 @@ import { BeforeAfterProof } from '../../components/reports/BeforeAfterProof';
 import { MapView } from '../../components/maps/MapView';
 import { EmptyState } from '../../components/ui/States';
 import { Modal } from '../../components/modals/Modal';
-import { useEcomer } from '../../contexts/EcomerContext';
+import { useInterventions } from '../../hooks/useInterventions';
+import { usePerimeters } from '../../hooks/usePerimeters';
 import { daysBetween, formatArea, formatDate } from '../../utils/format';
 import { interventionStatusMeta, materialMeta, perimeterStatusMeta } from '../../utils/labels';
 import { MEDIA } from '../../data/media';
 
 export function OngInterventionDetailPage() {
   const { id } = useParams<{id: string;}>();
-  const { interventions, perimeters, addAfterProof, resolvePerimeter } = useEcomer();
+  const { interventions, loading: interventionsLoading, addAfterProof } = useInterventions();
+  const { perimeters, loading: perimetersLoading, resolvePerimeter } = usePerimeters();
   const [proofOpen, setProofOpen] = useState(false);
   const [tons, setTons] = useState(3.5);
   const [photo, setPhoto] = useState(MEDIA.afterClean);
 
-  const intervention = interventions.find((i) => i.id === id);
-  const perimeter = perimeters.find((p) => p.id === intervention?.perimeterId);
+  const intervention = interventions.find((i: any) => i.id === id);
+  const perimeter = perimeters.find((p: any) => p.id === intervention?.perimeterId);
+
+  if (interventionsLoading || perimetersLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <p className="text-sm text-slate-500">Chargement...</p>
+      </div>
+    );
+  }
 
   if (!intervention) {
     return (
       <Card>
         <EmptyState
           title="Intervention introuvable"
-          message="Cette intervention n’existe pas ou a été archivée."
+          message="Cette intervention n'existe pas ou a été archivée."
           action={
           <Link to="/ONG/interventions">
               <Button variant="secondary">Retour à la liste</Button>
@@ -36,7 +46,6 @@ export function OngInterventionDetailPage() {
           } />
         
       </Card>);
-
   }
 
   const left = daysBetween(new Date(), intervention.deadline);
@@ -54,8 +63,8 @@ export function OngInterventionDetailPage() {
         </Link>
         <div className="flex items-center gap-2">
           <StatusBadge
-            label={interventionStatusMeta[intervention.status].label}
-            tone={interventionStatusMeta[intervention.status].tone} />
+            label={interventionStatusMeta[intervention.status as keyof typeof interventionStatusMeta]?.label || intervention.status}
+            tone={interventionStatusMeta[intervention.status as keyof typeof interventionStatusMeta]?.tone || 'neutral'} />
           
           <SeverityBadge severity={intervention.severity} />
         </div>
@@ -78,8 +87,7 @@ export function OngInterventionDetailPage() {
               ['Agents mobilisés', `${intervention.agents}`],
               ['Début', formatDate(intervention.startDate)],
               ['Date limite', formatDate(intervention.deadline)],
-              ['Matériel', intervention.materials.map((m) => materialMeta[m]).join(', ')]].
-              map(([k, v]) =>
+              ['Matériel', intervention.materials?.map((m: any) => materialMeta[m as keyof typeof materialMeta]).join(', ') || 'Aucun']].map(([k, v]) =>
               <div key={k} className="bg-white px-4 py-3">
                   <dt className="text-[10px] uppercase tracking-wide text-slate-500">{k}</dt>
                   <dd className="mt-0.5 text-[13px] font-semibold text-navy">{v}</dd>
@@ -113,7 +121,7 @@ export function OngInterventionDetailPage() {
                   </div>
                   <Button
                   variant="success"
-                  onClick={() => resolvePerimeter(intervention.perimeterId)}
+                  onClick={() => resolvePerimeter(intervention.perimeterId, intervention.collectedTons || tons)}
                   icon={<CheckCircle2Icon className="h-4 w-4" />}>
                   
                     Marquer le périmètre comme résolu
@@ -170,14 +178,14 @@ export function OngInterventionDetailPage() {
               subtitle={`${perimeter.reportCount} signalements regroupés`}
               action={
               <StatusBadge
-                label={perimeterStatusMeta[perimeter.status].label}
-                tone={perimeterStatusMeta[perimeter.status].tone} />
+                label={perimeterStatusMeta[perimeter.status as keyof typeof perimeterStatusMeta]?.label || perimeter.status}
+                tone={perimeterStatusMeta[perimeter.status as keyof typeof perimeterStatusMeta]?.tone || 'neutral'} />
 
               } />
             
               <div className="relative aspect-[4/3]">
                 <MapView
-                perimeters={[perimeter]}
+                perimeters={[perimeter as any]}
                 selectedPerimeterId={perimeter.id}
                 tone="dark"
                 showZoneLabels={false} />

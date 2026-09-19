@@ -93,6 +93,13 @@ export const interventionStatusMeta: Record<InterventionStatus, {label: string;t
   validee: { label: 'Validée', tone: 'success' }
 };
 
+export const missionStatusMeta: Record<string, {label: string;tone: Tone;}> = {
+  planifiee: { label: 'Planifiée', tone: 'info' },
+  en_cours: { label: 'En cours', tone: 'warning' },
+  terminee: { label: 'Terminée', tone: 'success' },
+  annulee: { label: 'Annulée', tone: 'danger' }
+};
+
 export const accountStatusMeta: Record<AccountStatus, {label: string;tone: Tone;}> = {
   actif: { label: 'Actif', tone: 'success' },
   en_attente: { label: 'En attente', tone: 'warning' },
@@ -101,10 +108,11 @@ export const accountStatusMeta: Record<AccountStatus, {label: string;tone: Tone;
 
 export const roleMeta: Record<UserRole, {label: string;tone: Tone;}> = {
   citoyen: { label: 'Citoyen', tone: 'info' },
-  ong: { label: 'ONG', tone: 'teal' },
-  direnv: { label: 'Direction Env.', tone: 'purple' },
-  agent: { label: 'Agent municipal', tone: 'neutral' },
-  admin: { label: 'Administrateur', tone: 'danger' }
+  ecomer: { label: 'ECOMER', tone: 'teal' },
+  agent_ecomer: { label: 'Agent ECOMER', tone: 'neutral' },
+  responsable_ecomer: { label: 'Responsable ECOMER', tone: 'purple' },
+  admin: { label: 'Administrateur', tone: 'danger' },
+  recycleur: { label: 'Recycleur', tone: 'success' }
 };
 
 export const materialMeta: Record<MaterialKey, string> = {

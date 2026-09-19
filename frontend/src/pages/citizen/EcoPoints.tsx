@@ -1,20 +1,22 @@
-import React from 'react';
 import { motion } from 'framer-motion';
 import { AwardIcon, MedalIcon, TrophyIcon } from 'lucide-react';
-import { useEcomer } from '../../contexts/EcomerContext';
-import { badges, leaderboard } from '../../data/mock-gamification';
+import { useGamification } from '../../hooks/useGamification';
 import { formatDate } from '../../utils/format';
 
 export function EcoPointsPage() {
-  const { ecoPoints, history } = useEcomer();
+  const { ecoPoints, history, leaderboard, badges, loading, getCurrentBadge, getNextBadge, getProgress } = useGamification();
 
-  const currentBadge = [...badges].reverse().find((b) => ecoPoints >= b.threshold) ?? badges[0];
-  const nextBadge = badges.find((b) => b.threshold > ecoPoints);
-  const progress = nextBadge ?
-  Math.round(
-    (ecoPoints - currentBadge.threshold) / (nextBadge.threshold - currentBadge.threshold) * 100
-  ) :
-  100;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <p className="text-sm text-slate-500">Chargement...</p>
+      </div>
+    );
+  }
+
+  const currentBadge = getCurrentBadge();
+  const nextBadge = getNextBadge();
+  const progress = getProgress();
 
   return (
     <div className="space-y-4 px-4 py-5 sm:px-0">

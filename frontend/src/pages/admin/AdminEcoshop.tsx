@@ -1,14 +1,15 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { PackageSearchIcon, PlusIcon, EditIcon, UploadCloudIcon, ImageIcon } from 'lucide-react';
-import { useEcomer } from '../../contexts/EcomerContext';
+import { useEcoshop } from '../../hooks/useEcoshop';
 import { StatusBadge } from '../../components/status/StatusBadge';
 import { Button } from '../../components/ui/Button';
-import { products } from '../EcoShopPage';
 
 export function AdminEcoshop() {
-  const { ecoshopOrders, updateOrderStatus } = useEcomer();
+  const { getCommandes, getLots, createLot } = useEcoshop();
+  const [ecoshopOrders, setEcoshopOrders] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'commandes' | 'lots'>('commandes');
-  const [localProducts, setLocalProducts] = useState([...products]);
+  const [localProducts, setLocalProducts] = useState<any[]>([]);
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
@@ -22,6 +23,38 @@ export function AdminEcoshop() {
   });
   
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [ordersData, lotsData] = await Promise.all([
+          getCommandes(),
+          getLots()
+        ]);
+        setEcoshopOrders(ordersData);
+        setLocalProducts(lotsData);
+      } catch (error) {
+        console.error('Error fetching ecoshop data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [getCommandes, getLots]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <p className="text-sm text-slate-500">Chargement...</p>
+      </div>
+    );
+  }
+
+  const updateOrderStatus = (orderId: string, status: string, paymentStatus?: string) => {
+    setEcoshopOrders(prev => prev.map(o => 
+      o.id === orderId ? { ...o, status, paymentStatus, updatedAt: new Date().toISOString() } : o
+    ));
+  };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -55,22 +88,27 @@ export function AdminEcoshop() {
     setIsModalOpen(true);
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (editingProduct) {
-      const index = products.findIndex(p => p.id === editingProduct.id);
-      if (index !== -1) {
-        products[index] = { ...editingProduct, ...formData };
+    try {
+      if (editingProduct) {
+        // Update existing lot - this would need an API call
+        setLocalProducts(prev => prev.map(p => p.id === editingProduct.id ? { ...editingProduct, ...formData } : p));
+      } else {
+        // Create new lot using API
+        const newLot = await createLot({
+          categorie: formData.title,
+          quantiteKg: parseFloat(formData.quantity) * 1000,
+          qualite: 'trie',
+          prixUnitaire: parseFloat(formData.price)
+        });
+        setLocalProducts(prev => [...prev, newLot]);
       }
-    } else {
-      const newProduct = {
-        id: Math.max(...products.map(p => p.id)) + 1,
-        ...formData
-      };
-      products.push(newProduct);
+      setIsModalOpen(false);
+    } catch (error) {
+      console.error('Error saving lot:', error);
+      alert('Erreur lors de la sauvegarde du lot');
     }
-    setLocalProducts([...products]);
-    setIsModalOpen(false);
   };
 
   return (

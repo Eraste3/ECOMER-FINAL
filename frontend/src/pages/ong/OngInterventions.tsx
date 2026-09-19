@@ -1,19 +1,30 @@
-
 import { Link } from 'react-router-dom';
 import { ArrowRightIcon } from 'lucide-react';
 import { Card, CardHeader } from '../../components/ui/Card';
 import { StatusBadge, SeverityBadge } from '../../components/status/StatusBadge';
 import { DataTable, type Column } from '../../components/tables/DataTable';
-import { useEcomer } from '../../contexts/EcomerContext';
+import { useInterventions } from '../../hooks/useInterventions';
 import { daysBetween, formatArea, formatDate } from '../../utils/format';
 import { interventionStatusMeta } from '../../utils/labels';
-import type { Intervention } from '../../types';
 
 export function OngInterventionsPage() {
-  const { interventions } = useEcomer();
-  const rows = interventions.filter((i) => i.operatorType === 'ong');
+  const { interventions, loading } = useInterventions();
+  const rows = interventions.filter((i: any) => i.operatorType === 'ong');
 
-  const columns: Array<Column<Intervention>> = [
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader
+          title="Mes interventions"
+          subtitle="Chaque autorisation ouvre une échéance de 30 jours pour déposer la preuve « après »" />
+        <div className="flex items-center justify-center py-12">
+          <p className="text-sm text-slate-500">Chargement...</p>
+        </div>
+      </Card>
+    );
+  }
+
+  const columns: Array<Column<any>> = [
     {
       key: 'id',
       header: 'Intervention',
@@ -37,8 +48,7 @@ export function OngInterventionsPage() {
           <div>
             <p className="font-semibold text-navy">{formatDate(i.deadline)}</p>
             <p
-              className={`text-[11px] font-bold ${left <= 7 ? 'text-eco-red' : left <= 15 ? 'text-amber-600' : 'text-emerald-600'}`
-              }>
+              className={`text-[11px] font-bold ${left <= 7 ? 'text-eco-red' : left <= 15 ? 'text-amber-600' : 'text-emerald-600'}` }>
 
               {left > 0 ? `${left} jours restants` : 'Échéance dépassée'}
             </p>
@@ -51,8 +61,8 @@ export function OngInterventionsPage() {
       header: 'Statut',
       render: (i) =>
         <StatusBadge
-          label={interventionStatusMeta[i.status].label}
-          tone={interventionStatusMeta[i.status].tone} />
+          label={interventionStatusMeta[i.status as keyof typeof interventionStatusMeta]?.label || i.status}
+          tone={interventionStatusMeta[i.status as keyof typeof interventionStatusMeta]?.tone || 'neutral'} />
 
 
     },

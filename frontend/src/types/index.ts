@@ -12,7 +12,7 @@ export type ReportStatus = 'en_attente' | 'autorise' | 'en_cours' | 'resolu';
 
 export type PerimeterStatus = 'nouveau' | 'en_validation' | 'en_intervention' | 'resolu';
 
-export type UserRole = 'citoyen' | 'ong' | 'direnv' | 'agent' | 'admin' | 'recycleur';
+export type UserRole = 'citoyen' | 'ecomer' | 'agent_ecomer' | 'responsable_ecomer' | 'admin' | 'recycleur';
 
 export type AccountStatus = 'actif' | 'en_attente' | 'suspendu';
 

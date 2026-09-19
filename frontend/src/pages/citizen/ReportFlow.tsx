@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
@@ -20,7 +20,7 @@ import { Button } from '../../components/ui/Button';
 import { StepIndicator } from '../../components/forms/StepIndicator';
 import { AiAnalysisCard, type AiResult } from '../../components/ai/AiAnalysisCard';
 import { MapView } from '../../components/maps/MapView';
-import { useEcomer } from '../../contexts/EcomerContext';
+import { useSignalements } from '../../hooks/useSignalements';
 import { CITIZEN_POSITION } from '../../data/citizen';
 import { MEDIA } from '../../data/media';
 import { formatCoord, toGeo } from '../../data/mock-geo';
@@ -56,7 +56,7 @@ const severityByWaste: Record<WasteType, Severity> = {
 
 export function ReportFlowPage() {
   const navigate = useNavigate();
-  const { addReport, ecoPoints } = useEcomer();
+  const { createSignalement } = useSignalements();
 
   const [step, setStep] = useState(0);
   const [wasteType, setWasteType] = useState<WasteType | null>(null);
@@ -66,6 +66,7 @@ export function ReportFlowPage() {
   const [marker, setMarker] = useState(CITIZEN_POSITION);
   const [description, setDescription] = useState('');
   const [submitted, setSubmitted] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const geo = useMemo(() => toGeo(marker.x, marker.y), [marker]);
   const zone = useMemo(() => zoneAt(marker), [marker]);
@@ -92,18 +93,25 @@ export function ReportFlowPage() {
   step === 3 ||
   step === 4;
 
-  const submit = () => {
+  const submit = async () => {
     if (!wasteType) return;
-    const report = addReport({
-      wasteType,
-      severity: ai?.severity ?? severityByWaste[wasteType],
-      description: description || undefined,
-      photoUrl: photo ?? undefined,
-      point: geo,
-      zone,
-      confidence: ai?.confidence ?? 70
-    });
-    setSubmitted(report.id);
+    setSubmitting(true);
+    try {
+      const report = await createSignalement({
+        photoUrl: photo || '',
+        latitude: geo.lat,
+        longitude: geo.lng,
+        typeDechet: wasteType,
+        description: description || undefined,
+        gravite: (ai?.severity ?? severityByWaste[wasteType]) as any
+      });
+      setSubmitted(report.id?.toString() || 'submitted');
+    } catch (error) {
+      console.error('Error creating report:', error);
+      alert('Erreur lors de la création du signalement');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (submitted) {
@@ -134,9 +142,8 @@ export function ReportFlowPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.35 }}
             className="mt-5 inline-flex items-center gap-2 rounded-full bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-700 ring-1 ring-inset ring-emerald-200">
-            
             <AwardIcon className="h-4 w-4" />
-            +10 EcoPoints · total {ecoPoints}
+            +10 EcoPoints
           </motion.div>
           <div className="mt-7 grid gap-2">
             <Link to="/citoyens/mes-signalements">
@@ -423,8 +430,8 @@ export function ReportFlowPage() {
               Continuer
             </Button> :
 
-          <Button variant="success" size="lg" onClick={submit} icon={<SendIcon className="h-4 w-4" />}>
-              Envoyer le signalement
+          <Button variant="success" size="lg" onClick={submit} disabled={submitting} icon={<SendIcon className="h-4 w-4" />}>
+              {submitting ? 'Envoi en cours...' : 'Envoyer le signalement'}
             </Button>
           }
         </div>

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { SearchIcon } from 'lucide-react';
 import { Card, CardHeader } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
@@ -7,33 +7,56 @@ import { SeverityBadge, StatusBadge } from '../../components/status/StatusBadge'
 import { Modal } from '../../components/modals/Modal';
 import { MapView } from '../../components/maps/MapView';
 import { MapLegend } from '../../components/maps/MapLegend';
-import { useEcomer } from '../../contexts/EcomerContext';
+import { useSignalements } from '../../hooks/useSignalements';
 import { formatDateTime } from '../../utils/format';
 import { reportStatusMeta, severityMeta, severityOrder, wasteMeta } from '../../utils/labels';
-import { formatCoord } from '../../data/mock-geo';
 import { ZONE_NAMES } from '../../data/mock-geo';
-import type { Report, ReportStatus, Severity, WasteType, ZoneName } from '../../types';
+import type { ReportStatus, Severity, WasteType, ZoneName } from '../../types';
 
 const wasteKeys: WasteType[] = ['plastiques', 'menagers', 'hydrocarbures', 'filets', 'divers', 'inconnue'];
 const statusKeys: ReportStatus[] = ['en_attente', 'autorise', 'en_cours', 'resolu'];
 
 export function AdminReportsPage() {
-  const { reports } = useEcomer();
+  const { getAllSignalements } = useSignalements();
+  const [reports, setReports] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
   const [waste, setWaste] = useState<WasteType | 'tous'>('tous');
   const [severity, setSeverity] = useState<Severity | 'tous'>('tous');
   const [status, setStatus] = useState<ReportStatus | 'tous'>('tous');
   const [zone, setZone] = useState<ZoneName | 'tous'>('tous');
-  const [detail, setDetail] = useState<Report | null>(null);
+  const [detail, setDetail] = useState<any | null>(null);
+
+  useEffect(() => {
+    const fetchReports = async () => {
+      try {
+        const data = await getAllSignalements();
+        setReports(data);
+      } catch (error) {
+        console.error('Error fetching reports:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchReports();
+  }, [getAllSignalements]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <p className="text-sm text-slate-500">Chargement...</p>
+      </div>
+    );
+  }
 
   const rows = useMemo(
     () =>
     reports.filter((r) => {
-      if (waste !== 'tous' && r.wasteType !== waste) return false;
-      if (severity !== 'tous' && r.severity !== severity) return false;
-      if (status !== 'tous' && r.status !== status) return false;
+      if (waste !== 'tous' && r.typeDechet !== waste) return false;
+      if (severity !== 'tous' && r.gravite !== severity) return false;
+      if (status !== 'tous' && r.statut !== status) return false;
       if (zone !== 'tous' && r.zone !== zone) return false;
-      if (query.trim() && !`${r.id} ${r.authorName}`.toLowerCase().includes(query.toLowerCase()))
+      if (query.trim() && !`${r.id} ${r.authorName || ''}`.toLowerCase().includes(query.toLowerCase()))
       return false;
       return true;
     }),
@@ -43,18 +66,13 @@ export function AdminReportsPage() {
   const selectCls =
   'h-9 rounded-lg border-0 bg-white/5 px-2.5 text-[12px] text-white ring-1 ring-inset ring-white/10 focus:ring-cyan-ecomer/40';
 
-  const columns: Array<Column<Report>> = [
+  const columns: Array<Column<any>> = [
   {
     key: 'id',
     header: 'ID',
     render: (r) =>
     <div>
-          <p className="font-semibold text-white">{r.id}</p>
-          {r.priority &&
-      <span className="text-[10px] font-bold uppercase tracking-wide text-eco-orange">
-              Prioritaire ONG
-            </span>
-      }
+          <p className="font-semibold text-white">#{r.id}</p>
         </div>
 
   },
@@ -63,20 +81,20 @@ export function AdminReportsPage() {
     header: 'Auteur',
     render: (r) =>
     <div>
-          <p className="text-slate-200">{r.authorName}</p>
-          <p className="text-[11px] text-slate-500">{r.authorRole === 'ong' ? 'ONG accréditée' : 'Citoyen'}</p>
+          <p className="text-slate-200">{r.authorName || 'Anonyme'}</p>
+          <p className="text-[11px] text-slate-500">Citoyen</p>
         </div>
 
   },
-  { key: 'type', header: 'Type', render: (r) => wasteMeta[r.wasteType].short, hideOn: 'sm' },
-  { key: 'zone', header: 'Zone', render: (r) => r.zone, hideOn: 'md' },
-  { key: 'sev', header: 'Gravité', render: (r) => <SeverityBadge severity={r.severity} dark /> },
+  { key: 'type', header: 'Type', render: (r) => wasteMeta[r.typeDechet as keyof typeof wasteMeta]?.short || r.typeDechet, hideOn: 'sm' },
+  { key: 'zone', header: 'Zone', render: (r) => r.zone || 'Inconnue', hideOn: 'md' },
+  { key: 'sev', header: 'Gravité', render: (r) => <SeverityBadge severity={r.gravite || 'modere'} dark /> },
   { key: 'date', header: 'Date', render: (r) => formatDateTime(r.createdAt), hideOn: 'lg' },
   {
     key: 'status',
     header: 'Statut',
     render: (r) =>
-    <StatusBadge label={reportStatusMeta[r.status].label} tone={reportStatusMeta[r.status].tone} dark />
+    <StatusBadge label={reportStatusMeta[r.statut as keyof typeof reportStatusMeta]?.label || r.statut} tone={reportStatusMeta[r.statut as keyof typeof reportStatusMeta]?.tone || 'neutral'} dark />
 
   }];
 
@@ -162,7 +180,7 @@ export function AdminReportsPage() {
         tone="dark"
         size="lg"
         title={detail ? `Signalement ${detail.id}` : ''}
-        subtitle={detail ? `${detail.zone} · ${wasteMeta[detail.wasteType].label}` : undefined}
+        subtitle={detail ? `${detail.zone || 'Inconnue'} · ${wasteMeta[detail.typeDechet as keyof typeof wasteMeta]?.label || detail.typeDechet}` : undefined}
         footer={
         <Button variant="outline-dark" onClick={() => setDetail(null)}>
             Fermer
@@ -190,16 +208,12 @@ export function AdminReportsPage() {
                 <dl className="mt-2 space-y-1.5 text-[12px]">
                   <div className="flex justify-between">
                     <dt className="text-slate-500">Type détecté</dt>
-                    <dd className="font-semibold text-white">{wasteMeta[detail.ai.detectedType].short}</dd>
-                  </div>
-                  <div className="flex justify-between">
-                    <dt className="text-slate-500">Confiance</dt>
-                    <dd className="font-semibold text-cyan-ecomer">{detail.ai.confidence} %</dd>
+                    <dd className="font-semibold text-white">{wasteMeta[detail.typeDechet as keyof typeof wasteMeta]?.short || detail.typeDechet}</dd>
                   </div>
                   <div className="flex justify-between">
                     <dt className="text-slate-500">Gravité estimée</dt>
-                    <dd className="font-semibold" style={{ color: severityMeta[detail.ai.estimatedSeverity].color }}>
-                      {severityMeta[detail.ai.estimatedSeverity].label}
+                    <dd className="font-semibold" style={{ color: severityMeta[detail.gravite as keyof typeof severityMeta]?.color || '#f59e0b' }}>
+                      {severityMeta[detail.gravite as keyof typeof severityMeta]?.label || detail.gravite}
                     </dd>
                   </div>
                 </dl>
@@ -208,14 +222,13 @@ export function AdminReportsPage() {
 
             <dl className="grid gap-2">
               {[
-            ['Auteur', `${detail.authorName} (${detail.authorRole === 'ong' ? 'ONG' : 'Citoyen'})`],
-            ['Zone', detail.zone],
-            ['Statut', reportStatusMeta[detail.status].label],
-            ['Périmètre rattaché', detail.perimeterId ?? 'Aucun'],
-            ['Latitude', formatCoord(detail.point.lat, 'lat')],
-            ['Longitude', formatCoord(detail.point.lng, 'lng')],
+            ['Auteur', `${detail.authorName || 'Anonyme'} (Citoyen)`],
+            ['Zone', detail.zone || 'Inconnue'],
+            ['Statut', reportStatusMeta[detail.statut as keyof typeof reportStatusMeta]?.label || detail.statut],
+            ['Latitude', detail.latitude || 'N/A'],
+            ['Longitude', detail.longitude || 'N/A'],
             ['Reçu le', formatDateTime(detail.createdAt)],
-            ['Description', detail.description ?? 'Aucune']].
+            ['Description', detail.description || 'Aucune']].
             map(([k, v]) =>
             <div key={k} className="rounded-lg bg-white/5 px-3 py-2.5">
                   <dt className="text-[10px] uppercase tracking-wide text-slate-500">{k}</dt>

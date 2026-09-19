@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRightIcon, FilterIcon } from 'lucide-react';
+import { FilterIcon, WrenchIcon } from 'lucide-react';
 import { Card, CardHeader } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { MapView } from '../../components/maps/MapView';
@@ -13,7 +13,7 @@ import { perimeterStatusMeta, severityMeta, severityOrder, wasteMeta } from '../
 import { formatCoord } from '../../data/mock-geo';
 import type { Severity } from '../../types';
 
-export function OngMapPage() {
+export function EcomerMapPage() {
   const { perimeters, loading } = usePerimeters();
   const [severities, setSeverities] = useState<Severity[]>([...severityOrder]);
   const [selected, setSelected] = useState<any>(perimeters[0] ?? null);
@@ -36,7 +36,7 @@ export function OngMapPage() {
     <div className="grid gap-4 xl:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]">
       <Card className="overflow-hidden">
         <CardHeader
-          title="Carte interactive des périmètres"
+          title="Carte des zones polluées"
           subtitle={`${filtered.length} périmètres affichés`}
           action={
           <div className="flex flex-wrap items-center gap-1.5">
@@ -108,9 +108,9 @@ export function OngMapPage() {
               label={perimeterStatusMeta[selected.status as keyof typeof perimeterStatusMeta]?.label || selected.status}
               tone={perimeterStatusMeta[selected.status as keyof typeof perimeterStatusMeta]?.tone || 'neutral'} />
             
-              <Link to="/recycleur/marketplace">
-                <Button size="sm" icon={<ArrowRightIcon className="h-3.5 w-3.5" />}>
-                  Acheter les déchets
+              <Link to="/ECOMER/missions">
+                <Button size="sm" icon={<WrenchIcon className="h-3.5 w-3.5" />}>
+                  Planifier une mission
                 </Button>
               </Link>
             </div>

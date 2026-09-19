@@ -1,13 +1,37 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FilterIcon, PackageIcon, TagIcon, ScaleIcon } from 'lucide-react';
-import { useEcomer } from '../../contexts/EcomerContext';
+import { useEcoshop } from '../../hooks/useEcoshop';
 import { wasteMeta } from '../../utils/labels';
 import type { WasteType } from '../../types';
 
 export function EcoshopMarketplace() {
-  const { wasteLots } = useEcomer();
+  const { getLots } = useEcoshop();
+  const [wasteLots, setWasteLots] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<WasteType | 'tous'>('tous');
+
+  useEffect(() => {
+    const fetchLots = async () => {
+      try {
+        const data = await getLots();
+        setWasteLots(data);
+      } catch (error) {
+        console.error('Error fetching waste lots:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchLots();
+  }, [getLots]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <p className="text-sm text-slate-500">Chargement des lots...</p>
+      </div>
+    );
+  }
 
   const availableLots = wasteLots.filter(l => l.status === 'disponible');
   const filteredLots = filter === 'tous' ? availableLots : availableLots.filter(l => l.type === filter);
@@ -77,8 +101,8 @@ export function EcoshopMarketplace() {
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <p className="font-display text-sm font-bold text-navy">{lot.id}</p>
-                    <p className="text-[12px] font-medium" style={{ color: wasteMeta[lot.type].color }}>
-                      {wasteMeta[lot.type].label}
+                    <p className="text-[12px] font-medium" style={{ color: wasteMeta[lot.type as keyof typeof wasteMeta]?.color || '#3b82f6' }}>
+                      {wasteMeta[lot.type as keyof typeof wasteMeta]?.label || lot.type}
                     </p>
                   </div>
                   <div className="text-right">

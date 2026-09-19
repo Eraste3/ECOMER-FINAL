@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeftIcon, CheckCircle2Icon, TruckIcon, StoreIcon, ScaleIcon } from 'lucide-react';
-import { useEcomer } from '../../contexts/EcomerContext';
+import { useEcoshop } from '../../hooks/useEcoshop';
 import { Button } from '../../components/ui/Button';
 import { wasteMeta } from '../../utils/labels';
 import type { DeliveryMethod } from '../../types';
@@ -9,8 +9,33 @@ import type { DeliveryMethod } from '../../types';
 export function EcoshopLotDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { wasteLots, placeOrder } = useEcomer();
+  const { getLots, createCommande } = useEcoshop();
+  const [wasteLots, setWasteLots] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>('livraison_ecomer');
+  const [ordering, setOrdering] = useState(false);
+
+  useEffect(() => {
+    const fetchLots = async () => {
+      try {
+        const data = await getLots();
+        setWasteLots(data);
+      } catch (error) {
+        console.error('Error fetching lots:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchLots();
+  }, [getLots]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <p className="text-sm text-slate-500">Chargement du lot...</p>
+      </div>
+    );
+  }
 
   const lot = wasteLots.find((l) => l.id === id);
 
@@ -23,9 +48,21 @@ export function EcoshopLotDetails() {
     );
   }
 
-  const handleOrder = () => {
-    placeOrder(lot.id, deliveryMethod, 'Achat direct depuis la marketplace.');
-    navigate('/ecoshop/commandes');
+  const handleOrder = async () => {
+    setOrdering(true);
+    try {
+      await createCommande({
+        lotId: parseInt(lot.id),
+        quantiteKg: lot.quantityTons * 1000,
+        typeTransaction: 'achat'
+      });
+      navigate('/ecoshop/commandes');
+    } catch (error) {
+      console.error('Error creating order:', error);
+      alert('Erreur lors de la création de la commande');
+    } finally {
+      setOrdering(false);
+    }
   };
 
   const totalPrice = lot.quantityTons * lot.pricePerTon;
@@ -54,8 +91,8 @@ export function EcoshopLotDetails() {
                   Qualité {lot.quality}
                 </span>
               </div>
-              <p className="mt-1 flex items-center gap-2 text-sm font-medium" style={{ color: wasteMeta[lot.type].color }}>
-                {wasteMeta[lot.type].label}
+              <p className="mt-1 flex items-center gap-2 text-sm font-medium" style={{ color: wasteMeta[lot.type as keyof typeof wasteMeta]?.color || '#3b82f6' }}>
+                {wasteMeta[lot.type as keyof typeof wasteMeta]?.label || lot.type}
               </p>
             </div>
             <div className="text-right">
@@ -112,8 +149,8 @@ export function EcoshopLotDetails() {
               </div>
 
               <div className="mt-8">
-                <Button block onClick={handleOrder} disabled={lot.status !== 'disponible'}>
-                  {lot.status === 'disponible' ? 'Commander ce lot' : 'Lot indisponible'}
+                <Button block onClick={handleOrder} disabled={lot.status !== 'disponible' || ordering}>
+                  {ordering ? 'Commande en cours...' : lot.status === 'disponible' ? 'Commander ce lot' : 'Lot indisponible'}
                 </Button>
               </div>
             </div>

@@ -1,15 +1,41 @@
-
+import { useState, useEffect } from 'react';
 import { PackageSearchIcon } from 'lucide-react';
-import { useEcomer } from '../../contexts/EcomerContext';
+import { useEcoshop } from '../../hooks/useEcoshop';
+import { useAuth } from '../../hooks/useAuth';
 import { StatusBadge } from '../../components/status/StatusBadge';
 import { relativeTime } from '../../utils/format';
 
 export function EcoshopMyOrders() {
-  const { ecoshopOrders, currentUser } = useEcomer();
+  const { getCommandes } = useEcoshop();
+  const { user } = useAuth();
+  const [ecoshopOrders, setEcoshopOrders] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const data = await getCommandes();
+        setEcoshopOrders(data);
+      } catch (error) {
+        console.error('Error fetching orders:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchOrders();
+  }, [getCommandes]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <p className="text-sm text-slate-500">Chargement des commandes...</p>
+      </div>
+    );
+  }
 
   // Dans un cas réel, on filtrerait par recyclerId === currentUser.id
   // Ici pour la démo, on montre toutes les commandes du mock ou on filtre par le currentUser s'il était un recycleur.
-  const myOrders = ecoshopOrders.filter(o => o.recyclerId === currentUser.id || o.recyclerId === 'REC-001');
+  const myOrders = ecoshopOrders.filter(o => o.recyclerId === user?.id || o.recyclerId === 'REC-001');
 
   return (
     <div className="space-y-4 sm:space-y-5">
